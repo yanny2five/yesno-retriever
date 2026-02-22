@@ -1,8 +1,9 @@
 import re
 
 RECORDS = {
-    "yes": "Record 1: User confirmed YES",
-    "no": "Record 2: User confirmed NO",
+    # Simple yes/no records
+    "yes": "Record 1: Look up for YES",
+    "no": "Record 2: Look up for NO",
 
     "dog": "Record 3: Animal category — dog",
     "cat": "Record 4: Animal category — cat",
