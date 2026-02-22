@@ -9,32 +9,42 @@
         margin: 0;
         font-family: Arial, sans-serif;
         background: linear-gradient(135deg, #4f46e5, #06b6d4);
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 24px;
       }
 
       .card {
         background: white;
-        padding: 40px;
+        padding: 28px;
         border-radius: 14px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        width: 420px;
-        text-align: center;
+        width: min(760px, 100%);
       }
 
       h1 {
-        margin-bottom: 25px;
+        margin: 0 0 16px 0;
+        text-align: center;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
       }
 
       input {
-        width: 70%;
+        flex: 1;
+        min-width: 260px;
         padding: 12px;
         font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        margin-right: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        outline: none;
       }
 
       button {
@@ -43,7 +53,7 @@
         background: #4f46e5;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
       }
 
@@ -51,45 +61,114 @@
         background: #3730a3;
       }
 
-      .result {
-        margin-top: 25px;
-        font-size: 18px;
-        font-weight: bold;
-        color: #111827;
+      .chips {
+        margin-top: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .chip {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        padding: 8px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 14px;
+        user-select: none;
+      }
+
+      .chip:hover {
+        background: #eef2ff;
+        border-color: #818cf8;
       }
 
       .hint {
-        margin-top: 15px;
-        color: #6b7280;
+        margin-top: 12px;
+        color: #64748b;
         font-size: 14px;
+        text-align: center;
+      }
+
+      .result {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 12px;
+        background: #0b1220;
+        color: #e5e7eb;
+        font-family: Consolas, Monaco, monospace;
+        white-space: pre-wrap;
+      }
+
+      .footer-row {
+        margin-top: 12px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .small-btn {
+        background: #111827;
+      }
+      .small-btn:hover {
+        background: #0b1220;
       }
     </style>
   </head>
 
   <body>
-
     <div class="card">
       <h1>Record Lookup</h1>
 
-      <form method="POST" action="/lookup">
-        <input 
-          name="answer"
-          placeholder="Try: dog, tree, car, pizza..."
-          value="{{ user_text }}"
-        />
-        <button type="submit">Search</button>
+      <form id="lookupForm" method="POST" action="/lookup">
+        <div class="form-row">
+          <input
+            id="answerInput"
+            name="answer"
+            placeholder="Type a keyword or click one below…"
+            value="{{ user_text }}"
+            autocomplete="off"
+          />
+          <button type="submit">Search</button>
+        </div>
+
+        <div class="footer-row">
+          <button class="small-btn" type="button" id="clearBtn">Clear</button>
+        </div>
       </form>
 
       <div class="hint">
-        Search any keyword from the dataset
+        Click a keyword chip to auto-fill and search.
+      </div>
+
+      <div class="chips" id="chips">
+        {% for k in keywords %}
+          <div class="chip" data-key="{{ k }}">{{ k }}</div>
+        {% endfor %}
       </div>
 
       {% if result %}
-        <div class="result">
-          {{ result }}
-        </div>
+        <div class="result">{{ result }}</div>
       {% endif %}
     </div>
 
+    <script>
+      const input = document.getElementById("answerInput");
+      const form = document.getElementById("lookupForm");
+
+      // Clickable chips: fill + auto-submit
+      document.getElementById("chips").addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+        input.value = chip.dataset.key;
+        form.submit();
+      });
+
+      // Clear input
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        input.value = "";
+        input.focus();
+      });
+    </script>
   </body>
 </html>
