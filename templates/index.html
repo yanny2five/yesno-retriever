@@ -137,14 +137,33 @@
         </div>
       </form>
 
+      <hr style="margin:18px 0">
+
+      <h3 style="text-align:center;margin:0 0 8px 0">Load CSV</h3>
+      <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
+        <div class="form-row">
+          <input type="file" name="csvfile" accept="text/csv" />
+          <button type="submit">Upload CSV</button>
+        </div>
+      </form>
+
+      {% if message %}
+        <div class="hint" style="color:#0b1220;background:#f1f5f9;padding:10px;border-radius:8px;margin-top:12px">{{ message }}</div>
+      {% endif %}
+
+      <div id="uploadStatus" class="hint" style="display:none;margin-top:12px;text-align:center"></div>
+
       <div class="hint">
         Click a keyword chip to auto-fill and search.
       </div>
 
       <div class="chips" id="chips">
-        {% for k in keywords %}
+        {% for k in keywords[:20] %}
           <div class="chip" data-key="{{ k }}">{{ k }}</div>
         {% endfor %}
+        {% if keywords|length > 20 %}
+          <div class="chip" style="cursor:default;background:#e5e7eb;border-color:#d1d5db" title="{{ keywords|length }} total keywords">...</div>
+        {% endif %}
       </div>
 
       {% if result %}
@@ -168,6 +187,58 @@
       document.getElementById("clearBtn").addEventListener("click", () => {
         input.value = "";
         input.focus();
+      });
+
+      // AJAX upload: intercept upload form and update chips dynamically
+      const uploadForm = document.getElementById('uploadForm');
+      const uploadStatus = document.getElementById('uploadStatus');
+      uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        uploadStatus.style.display = 'none';
+        const fd = new FormData(uploadForm);
+        try {
+          const resp = await fetch(uploadForm.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          });
+          const data = await resp.json();
+          if (!resp.ok || data.status !== 'ok') {
+            uploadStatus.textContent = data.message || 'Upload failed';
+            uploadStatus.style.color = '#b91c1c';
+            uploadStatus.style.display = '';
+            return;
+          }
+          // success: rebuild chips
+          const chips = document.getElementById('chips');
+          chips.innerHTML = '';
+          (data.keywords || []).forEach(k => {
+            const d = document.createElement('div');
+            d.className = 'chip';
+            d.dataset.key = k;
+            d.textContent = k;
+            chips.appendChild(d);
+          });
+          // Add ellipsis if there are more than 20 keywords
+          if (data.total_keywords && data.total_keywords > 20) {
+            const ellipsis = document.createElement('div');
+            ellipsis.className = 'chip';
+            ellipsis.textContent = '...';
+            ellipsis.style.cursor = 'default';
+            ellipsis.style.background = '#e5e7eb';
+            ellipsis.style.borderColor = '#d1d5db';
+            ellipsis.title = data.total_keywords + ' total keywords';
+            chips.appendChild(ellipsis);
+          }
+          });
+          uploadStatus.textContent = data.message || 'Updated';
+          uploadStatus.style.color = '#064e3b';
+          uploadStatus.style.display = '';
+        } catch (err) {
+          uploadStatus.textContent = 'Upload failed: ' + err;
+          uploadStatus.style.color = '#b91c1c';
+          uploadStatus.style.display = '';
+        }
       });
     </script>
   </body>
